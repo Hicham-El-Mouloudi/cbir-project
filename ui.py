@@ -1,10 +1,12 @@
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import filedialog
 
 class SectionIndexationUI : 
     def __init__(self, sectionContainer, indexDBCreator) : 
         # reference a l'instance de la classe IndexDBCreator
         self.indexDBCreator = indexDBCreator
+
         # container de la section
         self.sectionContainer = sectionContainer
         # label pour le nombre de bins
@@ -16,6 +18,7 @@ class SectionIndexationUI :
         self.binsNumberField = tk.OptionMenu(self.sectionContainer, self.selectedBinsNumber, *selectionOptions)
         # bouton pour créer la base d'indexation
         self.createIndexingDBButton = tk.Button(self.sectionContainer, text="Créer La Base d'Indexation", command=self.créerBaseIndexationAction)
+
         # configuring the layout
         self.sectionContainer.rowconfigure(0, weight=1)
         self.sectionContainer.columnconfigure(0, weight=0)
@@ -36,11 +39,54 @@ class SectionIndexationUI :
         self.indexDBCreator.setBinsNombreParCanal(binsNombreParCanal)
         self.indexDBCreator.createIndexDB()
         print("Creating indexing DB Completed successfully !\n")
-        
+
         # re-enabling the button
         self.createIndexingDBButton.config(state=tk.NORMAL)
         # Afficher une popup avec un message de confirmation
         messagebox.showinfo("Succès", "La base d'indexation a été créée avec succès.")
+
+class SectionRechercheUI : 
+    def __init__(self, sectionContainer) : 
+        # container de la section
+        self.sectionContainer = sectionContainer
+        # image chooser
+        self.imageChooserLabel = tk.Label(self.sectionContainer, text="Choisir une image :")
+        self.imageChooserButton = tk.Button(self.sectionContainer, text="Parcourir...", command=self.choisirImageAction)
+        # choix algo de similarité (distance)
+        self.similariteAlgoLabel = tk.Label(self.sectionContainer, text="Type De Distance :")
+        selectionOptions = ["Distance de Swain&Ballard", "Distance Euclidienne", "Distance Chi-Carré", "Corrélation"]
+        self.selectedSimilariteAlgo = tk.StringVar()
+        self.selectedSimilariteAlgo.set(selectionOptions[0])  # valeur par defaut
+        self.similariteAlgoField = tk.OptionMenu(self.sectionContainer, self.selectedSimilariteAlgo, *selectionOptions)
+        # button de recherche
+        self.rechercherButton = tk.Button(self.sectionContainer, text="Rechercher", command=self.rechercherAction)
+    
+    def setupUI(self) :
+        self.imageChooserLabel.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+        self.imageChooserButton.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
+        self.similariteAlgoLabel.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
+        self.similariteAlgoField.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
+        self.rechercherButton.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
+    
+    def choisirImageAction(self) :
+        print("Choisir une image action triggered.")
+        try:
+            filepath = filedialog.askopenfilename(
+                title="Choisir une image",
+                filetypes=[("Images", ("*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif")), ("Tous les fichiers", "*.*")]
+            )
+            if not filepath:
+                return
+            self.selectedImagePath = filepath
+            print("Image sélectionnée :", filepath)
+            messagebox.showinfo("Image sélectionnée", f"Image choisie :\n{filepath}")
+        
+        except Exception as e:
+            messagebox.showerror("Erreur", f"Impossible de choisir l'image :\n{e}")
+    
+    def rechercherAction(self) :
+        print("Rechercher action triggered.")
+        messagebox.showinfo("Recherche", "Fonction de recherche non encore implémentée.")
 
 class MainUI : 
     def __init__(self, indexDBCreator) :
@@ -52,19 +98,19 @@ class MainUI :
         self.sectionRecherche = tk.LabelFrame(self.root, text="Sous-systeme de recherche d’Images par le Contenu")
         # Les sous-sections UI
         self.sectionIndexationUI = SectionIndexationUI(self.sectionIndexation, indexDBCreator)
+        self.sectionRechercheUI = SectionRechercheUI(self.sectionRecherche)
 
     def setupUI(self) : 
         #--------------------------------- Setup ui principale
         self.sectionIndexation.pack(fill="x", padx=10, pady=5)
         self.sectionRecherche.pack(fill="both", expand=True, padx=10, pady=5)
-        label_online = tk.Label(self.sectionRecherche, text="Contenu en ligne ici")
-        label_online.pack(pady=20, padx=20)
         # ------------------------------------------------------
 
         # ---------------- Setup des compsants ui pour "Sous-systeme d'indexation"
         self.sectionIndexationUI.setupUI()
         # -------------------------------------------------------------------------
         # -------- Setup des compsants ui pour "Sous-systeme de recherche d’Images par le Contenu"
+        self.sectionRechercheUI.setupUI()
         # ----------------------------------------------------------------------------------------
     
     def startUI(self) : 
