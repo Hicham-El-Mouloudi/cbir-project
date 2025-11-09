@@ -60,6 +60,19 @@ class SectionRechercheUI :
         self.similariteAlgoField = tk.OptionMenu(self.sectionContainer, self.selectedSimilariteAlgo, *selectionOptions)
         # button de recherche
         self.rechercherButton = tk.Button(self.sectionContainer, text="Rechercher", command=self.rechercherAction)
+        # labeled frame pour histogramme complet et histobine de l'image choisie
+        self.lesHistogrammesFrame = tk.LabelFrame(self.sectionContainer, text="Histogrammes de l'image choisie")
+        # labeled frame pour les resultats de la recherche
+        self.résultatsRechercheFrame = tk.LabelFrame(self.sectionContainer, text="Résultats de la recherche")
+
+        # configuring the layout
+        self.sectionContainer.rowconfigure(0, weight=0)
+        self.sectionContainer.rowconfigure(1, weight=0)
+        self.sectionContainer.rowconfigure(2, weight=0)
+        self.sectionContainer.rowconfigure(3, weight=1)
+        self.sectionContainer.rowconfigure(4, weight=2)
+        self.sectionContainer.columnconfigure(0, weight=0)
+        self.sectionContainer.columnconfigure(1, weight=0)
     
     def setupUI(self) :
         self.imageChooserLabel.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
@@ -67,6 +80,9 @@ class SectionRechercheUI :
         self.similariteAlgoLabel.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
         self.similariteAlgoField.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
         self.rechercherButton.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
+        # 
+        self.lesHistogrammesFrame.grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
+        self.résultatsRechercheFrame.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
     
     def choisirImageAction(self) :
         print("Choisir une image action triggered.")
