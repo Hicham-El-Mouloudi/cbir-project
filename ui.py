@@ -73,6 +73,8 @@ class SectionRechercheUI :
         self.lesHistogrammesFrame = tk.LabelFrame(self.sectionContainer, text="Histogrammes de l'image choisie")
         # labeled frame pour les resultats de la recherche
         self.résultatsRechercheFrame = tk.LabelFrame(self.sectionContainer, text="Résultats de la recherche")
+        self.resultatsPlaceholderLabel = tk.Label(self.résultatsRechercheFrame, text="(Résultats de la recherche apparaîtront ici)")
+        self.resultatsPlaceholderLabel.pack(padx=5, pady=5)
         # 
         self.selectedImagePath = None
         self.selectedImage = None
@@ -134,9 +136,19 @@ class SectionRechercheUI :
 
 class MainUI : 
     def __init__(self, indexDBCreator, toolbox) :
-        self.root = tk.Tk()
-        self.root.title("Système CBIR")
-        self.root.geometry("400x300")
+        self.rootTK = tk.Tk()
+        self.rootTK.title("Système CBIR")
+        self.rootTK.geometry("400x300")
+        #
+        self.scrollableArea = tk.Canvas(self.rootTK)
+        self.scrollableArea.pack(side="left", fill="both", expand=True)
+        scrollbar = tk.Scrollbar(self.rootTK, orient="vertical", command=self.scrollableArea.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.scrollableArea.configure(yscrollcommand=scrollbar.set)
+        # 
+        self.root = tk.Frame(self.scrollableArea)
+        self.root.bind('<Configure>', lambda e: self.scrollableArea.configure(scrollregion=self.scrollableArea.bbox("all")))
+        self.scrollableArea.create_window((0,0), window=self.root, anchor="nw")
         # Les sections majeur
         self.sectionIndexation = tk.LabelFrame(self.root, text="Sous-systeme d'indexation")
         self.sectionRecherche = tk.LabelFrame(self.root, text="Sous-systeme de recherche d’Images par le Contenu")
@@ -147,7 +159,7 @@ class MainUI :
     def setupUI(self) : 
         #--------------------------------- Setup ui principale
         self.sectionIndexation.pack(fill="x", padx=10, pady=5)
-        self.sectionRecherche.pack(fill="both", expand=True, padx=10, pady=5)
+        self.sectionRecherche.pack(fill="x", expand=True, padx=10, pady=5)
         # ------------------------------------------------------
 
         # ---------------- Setup des compsants ui pour "Sous-systeme d'indexation"
@@ -158,4 +170,4 @@ class MainUI :
         # ----------------------------------------------------------------------------------------
     
     def startUI(self) : 
-        self.root.mainloop()
+        self.rootTK.mainloop()

@@ -29,7 +29,7 @@ class Toolbox :
         return histobine
     
     def generateHistogrammesPlot(self, histogrammeComplet, histobine, binsNombreParCanal):
-        fig = Figure(figsize=(6, 4), dpi=100)
+        fig = Figure(figsize=(3, 4), dpi=100)
         ax1 = fig.add_subplot(1, 2, 1)
         ax1.set_title("Histogramme Complet")
         ax1.bar(range(len(histogrammeComplet)), histogrammeComplet, color=['r']*256 + ['g']*256 + ['b']*256)
