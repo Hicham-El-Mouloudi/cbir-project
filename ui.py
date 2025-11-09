@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import cv2
 
 class SectionIndexationUI : 
     def __init__(self, sectionContainer, indexDBCreator) : 
@@ -25,6 +27,9 @@ class SectionIndexationUI :
         self.sectionContainer.columnconfigure(1, weight=0)
         self.sectionContainer.columnconfigure(2, weight=0)
     
+    def getSelectedBinsNumber(self) :
+        return int(self.selectedBinsNumber.get())
+    
     def setupUI(self) :
         self.binsNumberLabel.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
         self.binsNumberField.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
@@ -46,7 +51,11 @@ class SectionIndexationUI :
         messagebox.showinfo("Succès", "La base d'indexation a été créée avec succès.")
 
 class SectionRechercheUI : 
-    def __init__(self, sectionContainer) : 
+    def __init__(self, sectionContainer, indexDBCreator , sectionIndexationUI , toolbox) :
+        self.indexDBCreator = indexDBCreator
+        self.toolbox = toolbox
+        self.sectionIndexationUI = sectionIndexationUI # pour obtenir le nombre de bins par canal
+
         # container de la section
         self.sectionContainer = sectionContainer
         # image chooser
@@ -64,6 +73,9 @@ class SectionRechercheUI :
         self.lesHistogrammesFrame = tk.LabelFrame(self.sectionContainer, text="Histogrammes de l'image choisie")
         # labeled frame pour les resultats de la recherche
         self.résultatsRechercheFrame = tk.LabelFrame(self.sectionContainer, text="Résultats de la recherche")
+        # 
+        self.selectedImagePath = None
+        self.selectedImage = None
 
         # configuring the layout
         self.sectionContainer.rowconfigure(0, weight=0)
@@ -94,18 +106,34 @@ class SectionRechercheUI :
             if not filepath:
                 return
             self.selectedImagePath = filepath
+            self.selectedImage = cv2.imread(self.selectedImagePath)
             print("Image sélectionnée :", filepath)
-            messagebox.showinfo("Image sélectionnée", f"Image choisie :\n{filepath}")
-        
+            
+            # Generer et afficher les histogrammes de l'image choisie
+            if self.selectedImage is not None:
+                resizedImage = self.toolbox.redimensionnerImage(self.selectedImage, (256, 256))
+                histogrammeComplet = self.toolbox.calculerHistogrammeComplet(resizedImage, self.indexDBCreator.getImagesSize())
+                histobine = self.toolbox.calculerHistobine(histogrammeComplet, self.sectionIndexationUI.getSelectedBinsNumber())
+                print("Breakpoint : Etape pass avec succès.")
+                fig = self.toolbox.generateHistogrammesPlot(histogrammeComplet, histobine, self.sectionIndexationUI.getSelectedBinsNumber())
+
+                # vider le frame avant d'ajouter le nouveau plot
+                for widget in self.lesHistogrammesFrame.winfo_children():
+                    widget.destroy()
+
+                canvas = FigureCanvasTkAgg(fig, master=self.lesHistogrammesFrame)
+                canvas.draw()
+                canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
         except Exception as e:
             messagebox.showerror("Erreur", f"Impossible de choisir l'image :\n{e}")
     
+
     def rechercherAction(self) :
         print("Rechercher action triggered.")
         messagebox.showinfo("Recherche", "Fonction de recherche non encore implémentée.")
 
 class MainUI : 
-    def __init__(self, indexDBCreator) :
+    def __init__(self, indexDBCreator, toolbox) :
         self.root = tk.Tk()
         self.root.title("Système CBIR")
         self.root.geometry("400x300")
@@ -114,7 +142,7 @@ class MainUI :
         self.sectionRecherche = tk.LabelFrame(self.root, text="Sous-systeme de recherche d’Images par le Contenu")
         # Les sous-sections UI
         self.sectionIndexationUI = SectionIndexationUI(self.sectionIndexation, indexDBCreator)
-        self.sectionRechercheUI = SectionRechercheUI(self.sectionRecherche)
+        self.sectionRechercheUI = SectionRechercheUI(self.sectionRecherche, indexDBCreator, self.sectionIndexationUI, toolbox)
 
     def setupUI(self) : 
         #--------------------------------- Setup ui principale
