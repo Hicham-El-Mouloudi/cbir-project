@@ -211,3 +211,20 @@ class ImageSearcher :
         print("Les réesultats par Distance Euclidienne : ", allResults)
         topKResults = allResults[:topK]
         return topKResults
+
+    def rechercherDBAvecDistanceChiCarré(self, indexDB, histobineQueryImage,imagesSize, topK=5) :
+        # calculer les distances
+        distances = {}
+        for imagePath, histobine in list(indexDB.items()) : 
+            similarite = 0
+            for i in range(len(histobineQueryImage)) : 
+                similarite += (( histobine[i] - histobineQueryImage[i] ) ** 2) / (histobine[i] + histobineQueryImage[i])
+            # storing the distance
+            distances[imagePath] = float(similarite)
+        
+        # trier les distances et obtenir les top K resultats
+        # une valeur de distance plus petite indique une plus grande similarité
+        allResults = sorted( distances.items(), key= lambda item : item[1])
+        print("Les réesultats par Distance Chi-Carré : ", allResults)
+        topKResults = allResults[:topK]
+        return topKResults
