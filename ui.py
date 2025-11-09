@@ -210,6 +210,7 @@ class SectionRechercheUI :
         # afficher les résultats
         canvas = FigureCanvasTkAgg(figurePlot, master=self.resultatsRechercheFrame)
         canvas.draw()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
 class MainUI : 
     def __init__(self, imageSearcher, indexDBCreator, toolbox) :
