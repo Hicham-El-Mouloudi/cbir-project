@@ -192,6 +192,10 @@ class SectionRechercheUI :
                 resultas = self.imageSearcher.rechercherDBAvecDistanceSwainBallard(indexDB, histobineQueryImage,imagesSize=imagesSize, topK=nombreDeResultatsDemande)
             elif typeDeDistance == "Distance Euclidienne":
                 resultas = self.imageSearcher.rechercherDBAvecDistanceEuclidienne(indexDB, histobineQueryImage, imagesSize=imagesSize, topK=nombreDeResultatsDemande)
+            elif typeDeDistance == "Distance Chi-Carré":
+                resultas = self.imageSearcher.rechercherDBAvecDistanceChiCarre(indexDB, histobineQueryImage, imagesSize=imagesSize, topK=nombreDeResultatsDemande)
+            elif typeDeDistance == "Corrélation":
+                resultas = self.imageSearcher.rechercherDBAvecCorrelation(indexDB, histobineQueryImage, imagesSize=imagesSize, topK=nombreDeResultatsDemande)
             else:
                 raise Exception(f"L'algorithme de similarité '{typeDeDistance}' n'est pas encore implémenté.")
             lesPlotsDesResultas = self.toolbox.generateSearchResultsPlot(resultas, imagesSize)
