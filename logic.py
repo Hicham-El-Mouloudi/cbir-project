@@ -3,15 +3,7 @@ import numpy as np
 import json
 import os
 
-class IndexDBCreator : 
-    def __init__(self, datasetPath, imagesSize=(256, 256), binsNombreParCanal = 8) :
-        self.binsNombreParCanal = binsNombreParCanal
-        self.datasetPath = datasetPath
-        self.imagesSize = imagesSize
-    
-    def setBinsNombreParCanal(self, binsNombreParCanal) : 
-        self.binsNombreParCanal = binsNombreParCanal
-
+class Toolbox :
     def redimensionnerImage(self, image, size) :
         return cv2.resize(image, size)
     
@@ -28,13 +20,23 @@ class IndexDBCreator :
                     histogramme[ index ] += 1
         return histogramme
     
-    def calculerHistobine(self, histogrammeComplet) :
+    def calculerHistobine(self, histogrammeComplet, binsNombreParCanal) :
         tailleHistobine = int(256 / self.binsNombreParCanal) * 3
-        reshapedBins = histogrammeComplet.reshape((tailleHistobine, self.binsNombreParCanal))
+        reshapedBins = histogrammeComplet.reshape((tailleHistobine, binsNombreParCanal))
         print("The reshaped new bins are : ", reshapedBins)
         histobine = reshapedBins.sum(axis=1)
         return histobine
+
+class IndexDBCreator : 
+    def __init__(self, datasetPath, toolbox, imagesSize=(256, 256), binsNombreParCanal = 8) :
+        self.binsNombreParCanal = binsNombreParCanal
+        self.datasetPath = datasetPath
+        self.imagesSize = imagesSize
+        self.toolbox = toolbox
     
+    def setBinsNombreParCanal(self, binsNombreParCanal) : 
+        self.binsNombreParCanal = binsNombreParCanal
+
     def saveIndexDBAsJson(self, jsonBody) : 
         with open('indexDB.json', 'w') as jsonFile:
             json.dump(jsonBody, jsonFile)
@@ -47,10 +49,10 @@ class IndexDBCreator :
                     imagePath = os.path.join(root, file)
                     image = cv2.imread(imagePath)
                     if image is not None:
-                        image = self.redimensionnerImage(image, self.imagesSize)
-                        image = self.transformerEnRGB(image)
-                        histoComplet = self.calculerHistogrammeComplet(image)
-                        histoBin = self.calculerHistobine(histoComplet)
+                        image = self.toolbox.redimensionnerImage(image, self.imagesSize)
+                        image = self.toolbox.transformerEnRGB(image)
+                        histoComplet = self.toolbox.calculerHistogrammeComplet(image)
+                        histoBin = self.toolbox.calculerHistobine(histoComplet, self.binsNombreParCanal)
                         indexDB[imagePath] = histoBin.tolist()
 
         self.saveIndexDBAsJson(indexDB)

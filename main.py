@@ -1,7 +1,8 @@
 from ui import MainUI
-from logic import IndexDBCreator
+from logic import IndexDBCreator, Toolbox
 
-indexDBCreator = IndexDBCreator(".\\testData")
+toolbox = Toolbox()
+indexDBCreator = IndexDBCreator(".\\testData", toolbox)
 mainUi = MainUI(indexDBCreator=indexDBCreator)
 mainUi.setupUI()
 mainUi.startUI()
