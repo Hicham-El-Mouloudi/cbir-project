@@ -90,9 +90,12 @@ class Toolbox :
         nombreColonnes = 3
         nombreLignes = math.ceil(numResults / nombreColonnes)
         
-        fig = Figure(figsize=(nombreColonnes * 3, nombreLignes * 3), dpi=100)
+        width = nombreColonnes * 3
+        height = nombreLignes * 3
+        fig = Figure(figsize=(width, height), dpi=100)
         
-        for i, (imagePath, distance) in enumerate(searchResults):
+        print("Search results : ", list(enumerate(searchResults)))
+        for i, (imagePath, distance) in list(enumerate(searchResults)):
             image = self.readImage(imagePath, "RGB")
             image = self.redimensionnerImage(image, imagesSize)
             
@@ -154,8 +157,9 @@ class ImageSearcher :
         with open(self.indexDBPath, 'r') as jsonFile:
             indexDBWithMetaData = json.load(jsonFile)
             if (indexDBWithMetaData["colorSpace"] == colorSpace and
-                indexDBWithMetaData["imagesSize"] == imagesSize and
-                indexDBWithMetaData["binsNombreParCanal"] == binsNombreParCanal) :
+                indexDBWithMetaData["imagesSize"][0] == imagesSize[0] and
+                indexDBWithMetaData["imagesSize"][1] == imagesSize[1] and
+                int(indexDBWithMetaData["binsNombreParCanal"]) == binsNombreParCanal) :
                 valide = True
             return indexDBWithMetaData["data"], valide
     
@@ -171,19 +175,20 @@ class ImageSearcher :
         
         return indexDB, histobineQueryImage
 
-    def rechercherDBAvecDistanceSwainBallard(self, indexDB, histobineQueryImage, topK=5) :
+    def rechercherDBAvecDistanceSwainBallard(self, indexDB, histobineQueryImage,imagesSize, topK=5) :
         # calculer les distances
         distances = {}
         for imagePath, histobine in list(indexDB.items()) : 
             similarite = 0
             for i in range(len(histobineQueryImage)) : 
-                similarite += min(histobine[i], histobineQueryImage)
+                similarite += min(histobine[i], histobineQueryImage[i])
             # normalizing the similarity to [0,1]
             similarite = similarite / (imagesSize[0] * imagesSize[1])
             # storing the distance
-            distances[imagePath] = similarite
+            distances[imagePath] = float(similarite)
         
         # trier les distances et obtenir les top K resultats
-        allResults = sorted( distances, key= lambda item : item[1], reverse=True )
+        allResults = sorted( distances.items(), key= lambda item : item[1], reverse=True )
+        print("Les réesultats par Swain&Ballard : ", allResults)
         topKResults = allResults[:topK]
         return topKResults
