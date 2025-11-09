@@ -177,18 +177,23 @@ class SectionRechercheUI :
             return
         # preparer la recherche et la valider
         try:
+            # collecter les parametres necessaires
             selectedColorSpace = self.sectionIndexationUI.getSelectedColorSpace()
             selectedBinsNumber = self.sectionIndexationUI.getSelectedBinsNumber()
             imagesSize = self.indexDBCreator.getImagesSize()
             nombreDeResultatsDemande = self.getResultsCount()
             typeDeDistance = self.getSimilariteAlgo()
+
             # charger l'indexDB et preparer le descripteur de l'image query
             indexDB, histobineQueryImage = self.imageSearcher.preparerRechercheImagesSimilaires(self.selectedImage, selectedColorSpace, imagesSize, selectedBinsNumber)
             # effectuer la recherche avec la distance choisie
+            resultas = None
             if typeDeDistance == "Distance de Swain&Ballard":
-                resultas = self.imageSearcher.rechercherDBAvecDistanceSwainBallard(indexDB, histobineQueryImage, topK=nombreDeResultatsDemande)
+                resultas = self.imageSearcher.rechercherDBAvecDistanceSwainBallard(indexDB, histobineQueryImage,imagesSize=imagesSize, topK=nombreDeResultatsDemande)
             else:
                 raise Exception(f"L'algorithme de similarité '{typeDeDistance}' n'est pas encore implémenté.")
+            lesPlotsDesResultas = self.toolbox.generateSearchResultsPlot(resultas, imagesSize)
+            self.afficherResultatsRecherche(lesPlotsDesResultas)
         except Exception as e:
             messagebox.showerror("Erreur", f"Erreur lors de la préparation de la recherche :\n{e}")
             self.rechercherButton.config(state=tk.NORMAL)
