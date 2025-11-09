@@ -71,8 +71,8 @@ class SectionRechercheUI :
         self.sectionContainer.rowconfigure(2, weight=0)
         self.sectionContainer.rowconfigure(3, weight=1)
         self.sectionContainer.rowconfigure(4, weight=2)
-        self.sectionContainer.columnconfigure(0, weight=0)
-        self.sectionContainer.columnconfigure(1, weight=0)
+        self.sectionContainer.columnconfigure(0, weight=1)
+        self.sectionContainer.columnconfigure(1, weight=1)
     
     def setupUI(self) :
         self.imageChooserLabel.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
