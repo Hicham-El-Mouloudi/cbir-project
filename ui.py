@@ -18,6 +18,13 @@ class SectionIndexationUI :
         self.selectedBinsNumber.set("16")  # valeur par defaut
         selectionOptions = ["8", "16", "32", "64", "128", "256"]
         self.binsNumberField = tk.OptionMenu(self.sectionContainer, self.selectedBinsNumber, *selectionOptions)
+        # label pour l'espace de couleur
+        self.colorSpaceLabel = tk.Label(self.sectionContainer, text="Espace Couleur :")
+        # menu d'options pour l'espace de couleur
+        self.selectedColorSpace = tk.StringVar()
+        ColorSpaceSelectionOptions = ["RGB", "HSV", "Lab"]
+        self.selectedColorSpace.set(ColorSpaceSelectionOptions[0])  # valeur par defaut
+        self.colorSpaceField = tk.OptionMenu(self.sectionContainer, self.selectedColorSpace, *ColorSpaceSelectionOptions)
         # bouton pour créer la base d'indexation
         self.createIndexingDBButton = tk.Button(self.sectionContainer, text="Créer La Base d'Indexation", command=self.créerBaseIndexationAction)
 
@@ -26,23 +33,29 @@ class SectionIndexationUI :
         self.sectionContainer.columnconfigure(0, weight=0)
         self.sectionContainer.columnconfigure(1, weight=0)
         self.sectionContainer.columnconfigure(2, weight=0)
+        self.sectionContainer.columnconfigure(3, weight=0)
     
+    def getSelectedColorSpace(self) :
+        return self.selectedColorSpace.get()
+
     def getSelectedBinsNumber(self) :
         return int(self.selectedBinsNumber.get())
     
     def setupUI(self) :
         self.binsNumberLabel.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
         self.binsNumberField.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
-        self.createIndexingDBButton.grid(row=0, column=2, padx=5, pady=5, sticky="nsew")
+        self.colorSpaceField.grid(row=0, column=2, padx=5, pady=5, sticky="nsew")
+        self.createIndexingDBButton.grid(row=0, column=3, padx=5, pady=5, sticky="nsew")
 
     def créerBaseIndexationAction(self) :
         # disabling the button to prevent multiple clicks
         self.createIndexingDBButton.config(state=tk.DISABLED)
 
         print("Creating indexing DB...\n")
-        binsNombreParCanal = int(self.selectedBinsNumber.get())
+        binsNombreParCanal = self.getSelectedBinsNumber()
+        colorSpace = self.getSelectedColorSpace()
         self.indexDBCreator.setBinsNombreParCanal(binsNombreParCanal)
-        self.indexDBCreator.createIndexDB()
+        self.indexDBCreator.createIndexDB(colorSpace)
         print("Creating indexing DB Completed successfully !\n")
 
         # re-enabling the button
@@ -71,6 +84,8 @@ class SectionRechercheUI :
         self.rechercherButton = tk.Button(self.sectionContainer, text="Rechercher", command=self.rechercherAction)
         # labeled frame pour histogramme complet et histobine de l'image choisie
         self.lesHistogrammesFrame = tk.LabelFrame(self.sectionContainer, text="Histogrammes de l'image choisie")
+        self.histogramsPlaceholderLabel = tk.Label(self.lesHistogrammesFrame, text="Aucune image choisie")
+        self.histogramsPlaceholderLabel.pack(padx=5, pady=5)
         # labeled frame pour les resultats de la recherche
         self.résultatsRechercheFrame = tk.LabelFrame(self.sectionContainer, text="Résultats de la recherche")
         self.resultatsPlaceholderLabel = tk.Label(self.résultatsRechercheFrame, text="(Résultats de la recherche apparaîtront ici)")
@@ -99,6 +114,9 @@ class SectionRechercheUI :
         self.résultatsRechercheFrame.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
     
     def choisirImageAction(self) :
+        selectedColorSpace = self.sectionIndexationUI.getSelectedColorSpace()
+        selectedBinsNumber = self.sectionIndexationUI.getSelectedBinsNumber()
+        # 
         print("Choisir une image action triggered.")
         try:
             filepath = filedialog.askopenfilename(
@@ -108,16 +126,16 @@ class SectionRechercheUI :
             if not filepath:
                 return
             self.selectedImagePath = filepath
-            self.selectedImage = cv2.imread(self.selectedImagePath)
+            self.selectedImage = self.toolbox.readImage(filepath, selectedColorSpace)
             print("Image sélectionnée :", filepath)
             
             # Generer et afficher les histogrammes de l'image choisie
             if self.selectedImage is not None:
                 resizedImage = self.toolbox.redimensionnerImage(self.selectedImage, (256, 256))
                 histogrammeComplet = self.toolbox.calculerHistogrammeComplet(resizedImage, self.indexDBCreator.getImagesSize())
-                histobine = self.toolbox.calculerHistobine(histogrammeComplet, self.sectionIndexationUI.getSelectedBinsNumber())
+                histobine = self.toolbox.calculerHistobine(histogrammeComplet, selectedBinsNumber)
+                fig = self.toolbox.generateHistogrammesPlot(histogrammeComplet, histobine, selectedColorSpace)
                 print("Breakpoint : Etape pass avec succès.")
-                fig = self.toolbox.generateHistogrammesPlot(histogrammeComplet, histobine, self.sectionIndexationUI.getSelectedBinsNumber())
 
                 # vider le frame avant d'ajouter le nouveau plot
                 for widget in self.lesHistogrammesFrame.winfo_children():
