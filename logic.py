@@ -192,3 +192,22 @@ class ImageSearcher :
         print("Les réesultats par Swain&Ballard : ", allResults)
         topKResults = allResults[:topK]
         return topKResults
+
+    def rechercherDBAvecDistanceEuclidienne(self, indexDB, histobineQueryImage,imagesSize, topK=5) :
+        # calculer les distances
+        distances = {}
+        for imagePath, histobine in list(indexDB.items()) : 
+            similarite = 0
+            for i in range(len(histobineQueryImage)) : 
+                similarite += ( histobine[i] - histobineQueryImage[i] ) ** 2
+            # calculer la racine carrée pour obtenir la distance euclidienne
+            similarite = math.sqrt(similarite)
+            # storing the distance
+            distances[imagePath] = float(similarite)
+        
+        # trier les distances et obtenir les top K resultats
+        # une valeur de distance plus petite indique une plus grande similarité
+        allResults = sorted( distances.items(), key= lambda item : item[1])
+        print("Les réesultats par Distance Euclidienne : ", allResults)
+        topKResults = allResults[:topK]
+        return topKResults
