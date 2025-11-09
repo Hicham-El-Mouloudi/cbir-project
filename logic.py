@@ -212,7 +212,7 @@ class ImageSearcher :
         topKResults = allResults[:topK]
         return topKResults
 
-    def rechercherDBAvecDistanceChiCarré(self, indexDB, histobineQueryImage,imagesSize, topK=5) :
+    def rechercherDBAvecDistanceChiCarre(self, indexDB, histobineQueryImage,imagesSize, topK=5) :
         # calculer les distances
         distances = {}
         for imagePath, histobine in list(indexDB.items()) : 
