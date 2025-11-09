@@ -228,3 +228,29 @@ class ImageSearcher :
         print("Les réesultats par Distance Chi-Carré : ", allResults)
         topKResults = allResults[:topK]
         return topKResults
+
+    def rechercherDBAvecCorrelation(self, indexDB, histobineQueryImage,imagesSize, topK=5) :
+        # calculer les distances
+        distances = {}
+        averageHistobineQueryImage = np.mean(histobineQueryImage)
+        numerateur = 0
+        denominateurHistobineQueryImageSum = 0
+        denominateurHistobineSum = 0
+        for imagePath, histobine in list(indexDB.items()) : 
+            similarite = 0
+            AverageHistobine = np.mean(histobine)
+            for i in range(len(histobineQueryImage)) : 
+                numerateur += (histobine[i] - AverageHistobine) * (histobineQueryImage[i] - averageHistobineQueryImage)
+                denominateurHistobineQueryImageSum += (histobineQueryImage[i] - averageHistobineQueryImage) ** 2
+                denominateurHistobineSum += (histobine[i] - AverageHistobine) ** 2
+            denominateur = math.sqrt(denominateurHistobineQueryImageSum * denominateurHistobineSum)
+            similarite = numerateur / denominateur
+            # storing the distance
+            distances[imagePath] = float(similarite)
+        
+        # trier les distances et obtenir les top K resultats
+        # une valeur de distance plus proche de 1 indique une plus grande similarité
+        allResults = sorted( distances.items(), key= lambda item : item[1], reverse=True)
+        print("Les réesultats par Correlation : ", allResults)
+        topKResults = allResults[:topK]
+        return topKResults
