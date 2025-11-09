@@ -183,7 +183,7 @@ class ImageSearcher :
             for i in range(len(histobineQueryImage)) : 
                 similarite += min(histobine[i], histobineQueryImage[i])
             # normalizing the similarity to [0,1]
-            similarite = similarite / (imagesSize[0] * imagesSize[1])
+            similarite = similarite / (imagesSize[0] * imagesSize[1]*3)
             # storing the distance
             distances[imagePath] = float(similarite)
         
