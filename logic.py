@@ -3,6 +3,7 @@ import numpy as np
 import json
 import os
 from matplotlib.figure import Figure
+import math
 
 class Toolbox :
     def readImage(self, imagePath, colorSpace) :
@@ -83,6 +84,24 @@ class Toolbox :
         ax2.legend()
         
         return fig
+    
+    def generateSearchResultsPlot(self, searchResults, imagesSize) :
+        numResults = len(searchResults)
+        nombreColonnes = 3
+        nombreLignes = math.ceil(numResults / nombreColonnes)
+        
+        fig = Figure(figsize=(nombreColonnes * 3, nombreLignes * 3), dpi=100)
+        
+        for i, (imagePath, distance) in enumerate(searchResults):
+            image = self.readImage(imagePath, "RGB")
+            image = self.redimensionnerImage(image, imagesSize)
+            
+            ax = fig.add_subplot(nombreLignes, nombreColonnes, i + 1)
+            ax.imshow(image)
+            ax.set_title(f"D = {distance:.4f}, '" + imagePath + "'")
+            ax.axis('off')
+        
+        return fig
 
 class IndexDBCreator : 
     def __init__(self, datasetPath, toolbox, imagesSize=(256, 256), binsNombreParCanal = 8) :
@@ -122,3 +141,49 @@ class IndexDBCreator :
                         indexDB[imagePath] = histoBin.tolist()
 
         self.saveIndexDBAsJson(indexDB, colorSpace, self.imagesSize, self.binsNombreParCanal)
+
+class ImageSearcher :
+    def __init__(self, indexDBPath, toolbox) :
+        self.indexDBPath = indexDBPath
+        self.toolbox = toolbox
+        self.indexDB = self.indexDBPath
+    
+    # charger l'indexDB depuis le fichier json et valider sa compatibilite avec les parametres données
+    def loadIndexDBFromJsonAndCheck(self, colorSpace, imagesSize, binsNombreParCanal) :
+        valide = False
+        with open(self.indexDBPath, 'r') as jsonFile:
+            indexDBWithMetaData = json.load(jsonFile)
+            if (indexDBWithMetaData["colorSpace"] == colorSpace and
+                indexDBWithMetaData["imagesSize"] == imagesSize and
+                indexDBWithMetaData["binsNombreParCanal"] == binsNombreParCanal) :
+                valide = True
+            return indexDBWithMetaData["data"], valide
+    
+    def preparerRechercheImagesSimilaires(self, queryImage, colorSpace, imagesSize, binsNombreParCanal, topK=5) :
+        # 
+        indexDB, valide = self.loadIndexDBFromJsonAndCheck(colorSpace, imagesSize, binsNombreParCanal)
+        # si le database des descripteurs n'est pas compatible avec les parametres actuels, on retourne None
+        if not valide :
+            raise Exception("Vous devez créer d'abort une database de descripteurs compatible !")
+        # 
+        histogrameComplete = self.toolbox.calculerHistogrammeComplet(queryImage, imagesSize)
+        histobineQueryImage = self.toolbox.calculerHistobine(histogrameComplete, binsNombreParCanal)
+        
+        return indexDB, histobineQueryImage
+
+    def rechercherDBAvecDistanceSwainBallard(self, indexDB, histobineQueryImage, topK=5) :
+        # calculer les distances
+        distances = {}
+        for imagePath, histobine in list(indexDB.items()) : 
+            similarite = 0
+            for i in range(len(histobineQueryImage)) : 
+                similarite += min(histobine[i], histobineQueryImage)
+            # normalizing the similarity to [0,1]
+            similarite = similarite / (imagesSize[0] * imagesSize[1])
+            # storing the distance
+            distances[imagePath] = similarite
+        
+        # trier les distances et obtenir les top K resultats
+        allResults = sorted( distances, key= lambda item : item[1], reverse=True )
+        topKResults = allResults[:topK]
+        return topKResults

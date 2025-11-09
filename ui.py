@@ -64,7 +64,8 @@ class SectionIndexationUI :
         messagebox.showinfo("Succès", "La base d'indexation a été créée avec succès.")
 
 class SectionRechercheUI : 
-    def __init__(self, sectionContainer, indexDBCreator , sectionIndexationUI , toolbox) :
+    def __init__(self, imageSearcher, sectionContainer, indexDBCreator , sectionIndexationUI , toolbox) :
+        self.imageSearcher = imageSearcher
         self.indexDBCreator = indexDBCreator
         self.toolbox = toolbox
         self.sectionIndexationUI = sectionIndexationUI # pour obtenir le nombre de bins par canal
@@ -80,6 +81,9 @@ class SectionRechercheUI :
         self.selectedSimilariteAlgo = tk.StringVar()
         self.selectedSimilariteAlgo.set(selectionOptions[0])  # valeur par defaut
         self.similariteAlgoField = tk.OptionMenu(self.sectionContainer, self.selectedSimilariteAlgo, *selectionOptions)
+        # nombre de résultats à afficher
+        self.resultCountLabel = tk.Label(self.sectionContainer, text="Nombre de résultats à afficher :")
+        self.resultCountField = tk.Entry(self.sectionContainer)
         # button de recherche
         self.rechercherButton = tk.Button(self.sectionContainer, text="Rechercher", command=self.rechercherAction)
         # labeled frame pour histogramme complet et histobine de l'image choisie
@@ -87,8 +91,8 @@ class SectionRechercheUI :
         self.histogramsPlaceholderLabel = tk.Label(self.lesHistogrammesFrame, text="Aucune image choisie")
         self.histogramsPlaceholderLabel.pack(padx=5, pady=5)
         # labeled frame pour les resultats de la recherche
-        self.résultatsRechercheFrame = tk.LabelFrame(self.sectionContainer, text="Résultats de la recherche")
-        self.resultatsPlaceholderLabel = tk.Label(self.résultatsRechercheFrame, text="(Résultats de la recherche apparaîtront ici)")
+        self.resultatsRechercheFrame = tk.LabelFrame(self.sectionContainer, text="Résultats de la recherche")
+        self.resultatsPlaceholderLabel = tk.Label(self.resultatsRechercheFrame, text="(Résultats de la recherche apparaîtront ici)")
         self.resultatsPlaceholderLabel.pack(padx=5, pady=5)
         # 
         self.selectedImagePath = None
@@ -98,20 +102,33 @@ class SectionRechercheUI :
         self.sectionContainer.rowconfigure(0, weight=0)
         self.sectionContainer.rowconfigure(1, weight=0)
         self.sectionContainer.rowconfigure(2, weight=0)
-        self.sectionContainer.rowconfigure(3, weight=1)
-        self.sectionContainer.rowconfigure(4, weight=2)
+        self.sectionContainer.rowconfigure(3, weight=0)
+        self.sectionContainer.rowconfigure(4, weight=1)
+        self.sectionContainer.rowconfigure(5, weight=2)
         self.sectionContainer.columnconfigure(0, weight=1)
         self.sectionContainer.columnconfigure(1, weight=1)
+    
+    def getResultsCount(self) :
+        try :
+            count = int(self.resultCountField.get())
+        except ValueError :
+            count = 5 # valeur par defaut
+        return count
+    
+    def getSimilariteAlgo(self) :
+        return self.selectedSimilariteAlgo.get()
     
     def setupUI(self) :
         self.imageChooserLabel.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
         self.imageChooserButton.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
         self.similariteAlgoLabel.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
         self.similariteAlgoField.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
-        self.rechercherButton.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
+        self.resultCountLabel.grid(row=2, column=0, padx=5, pady=5, sticky="nsew")
+        self.resultCountField.grid(row=2, column=1, padx=5, pady=5, sticky="nsew")
+        self.rechercherButton.grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
         # 
-        self.lesHistogrammesFrame.grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
-        self.résultatsRechercheFrame.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
+        self.lesHistogrammesFrame.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
+        self.resultatsRechercheFrame.grid(row=5, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
     
     def choisirImageAction(self) :
         selectedColorSpace = self.sectionIndexationUI.getSelectedColorSpace()
@@ -150,10 +167,47 @@ class SectionRechercheUI :
 
     def rechercherAction(self) :
         print("Rechercher action triggered.")
-        messagebox.showinfo("Recherche", "Fonction de recherche non encore implémentée.")
+        # disabling the button to prevent multiple clicks
+        self.rechercherButton.config(state=tk.DISABLED)
+
+        # vérifier si une image est choisie
+        if self.selectedImagePath is None or self.selectedImage is None:
+            messagebox.showwarning("Avertissement", "Veuillez choisir une image avant de rechercher.")
+            self.rechercherButton.config(state=tk.NORMAL)
+            return
+        # preparer la recherche et la valider
+        try:
+            selectedColorSpace = self.sectionIndexationUI.getSelectedColorSpace()
+            selectedBinsNumber = self.sectionIndexationUI.getSelectedBinsNumber()
+            imagesSize = self.indexDBCreator.getImagesSize()
+            nombreDeResultatsDemande = self.getResultsCount()
+            typeDeDistance = self.getSimilariteAlgo()
+            # charger l'indexDB et preparer le descripteur de l'image query
+            indexDB, histobineQueryImage = self.imageSearcher.preparerRechercheImagesSimilaires(self.selectedImage, selectedColorSpace, imagesSize, selectedBinsNumber)
+            # effectuer la recherche avec la distance choisie
+            if typeDeDistance == "Distance de Swain&Ballard":
+                resultas = self.imageSearcher.rechercherDBAvecDistanceSwainBallard(indexDB, histobineQueryImage, topK=nombreDeResultatsDemande)
+            else:
+                raise Exception(f"L'algorithme de similarité '{typeDeDistance}' n'est pas encore implémenté.")
+        except Exception as e:
+            messagebox.showerror("Erreur", f"Erreur lors de la préparation de la recherche :\n{e}")
+            self.rechercherButton.config(state=tk.NORMAL)
+            return
+        
+        # re-enabling the button
+        self.rechercherButton.config(state=tk.NORMAL)
+    
+    # afficher les résultats de recherche
+    def afficherResultatsRecherche(self, figurePlot) :
+        # vider le frame avant d'ajouter les nouveaux résultats
+        for widget in self.resultatsRechercheFrame.winfo_children():
+            widget.destroy()
+        # afficher les résultats
+        canvas = FigureCanvasTkAgg(figurePlot, master=self.resultatsRechercheFrame)
+        canvas.draw()
 
 class MainUI : 
-    def __init__(self, indexDBCreator, toolbox) :
+    def __init__(self, imageSearcher, indexDBCreator, toolbox) :
         self.rootTK = tk.Tk()
         self.rootTK.title("Système CBIR")
         self.rootTK.geometry("400x300")
@@ -172,7 +226,7 @@ class MainUI :
         self.sectionRecherche = tk.LabelFrame(self.root, text="Sous-systeme de recherche d’Images par le Contenu")
         # Les sous-sections UI
         self.sectionIndexationUI = SectionIndexationUI(self.sectionIndexation, indexDBCreator)
-        self.sectionRechercheUI = SectionRechercheUI(self.sectionRecherche, indexDBCreator, self.sectionIndexationUI, toolbox)
+        self.sectionRechercheUI = SectionRechercheUI(imageSearcher, self.sectionRecherche, indexDBCreator, self.sectionIndexationUI, toolbox)
 
     def setupUI(self) : 
         #--------------------------------- Setup ui principale

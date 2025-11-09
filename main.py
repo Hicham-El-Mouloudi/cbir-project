@@ -1,8 +1,9 @@
 from ui import MainUI
-from logic import IndexDBCreator, Toolbox
+from logic import IndexDBCreator, Toolbox, ImageSearcher
 
 toolbox = Toolbox()
 indexDBCreator = IndexDBCreator(".\\testData", toolbox)
-mainUi = MainUI(indexDBCreator=indexDBCreator, toolbox=toolbox)
+imageSearcher = ImageSearcher("indexDB.json", toolbox)
+mainUi = MainUI(imageSearcher=imageSearcher ,indexDBCreator=indexDBCreator, toolbox=toolbox)
 mainUi.setupUI()
 mainUi.startUI()
