@@ -44,8 +44,9 @@ class SectionIndexationUI :
     def setupUI(self) :
         self.binsNumberLabel.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
         self.binsNumberField.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
-        self.colorSpaceField.grid(row=0, column=2, padx=5, pady=5, sticky="nsew")
-        self.createIndexingDBButton.grid(row=0, column=3, padx=5, pady=5, sticky="nsew")
+        self.colorSpaceLabel.grid(row=0, column=2, padx=5, pady=5, sticky="nsew")
+        self.colorSpaceField.grid(row=0, column=3, padx=5, pady=5, sticky="nsew")
+        self.createIndexingDBButton.grid(row=0, column=4, padx=5, pady=5, sticky="nsew")
 
     def créerBaseIndexationAction(self) :
         # disabling the button to prevent multiple clicks
@@ -222,7 +223,7 @@ class MainUI :
     def __init__(self, imageSearcher, indexDBCreator, toolbox) :
         self.rootTK = tk.Tk()
         self.rootTK.title("Système CBIR")
-        self.rootTK.geometry("400x300")
+        self.rootTK.geometry("500x700")
         #
         self.scrollableArea = tk.Canvas(self.rootTK)
         self.scrollableArea.pack(side="left", fill="both", expand=True)
@@ -232,13 +233,17 @@ class MainUI :
         # 
         self.root = tk.Frame(self.scrollableArea)
         self.root.bind('<Configure>', lambda e: self.scrollableArea.configure(scrollregion=self.scrollableArea.bbox("all")))
-        self.scrollableArea.create_window((0,0), window=self.root, anchor="nw")
+        self.frame_id = self.scrollableArea.create_window((0,0), window=self.root, anchor="nw")
+        self.scrollableArea.bind('<Configure>', self.on_canvas_resize)
         # Les sections majeur
         self.sectionIndexation = tk.LabelFrame(self.root, text="Sous-systeme d'indexation")
         self.sectionRecherche = tk.LabelFrame(self.root, text="Sous-systeme de recherche d’Images par le Contenu")
         # Les sous-sections UI
         self.sectionIndexationUI = SectionIndexationUI(self.sectionIndexation, indexDBCreator)
         self.sectionRechercheUI = SectionRechercheUI(imageSearcher, self.sectionRecherche, indexDBCreator, self.sectionIndexationUI, toolbox)
+    def on_canvas_resize(self, event):
+        canvas_width = event.width
+        self.scrollableArea.itemconfig(self.frame_id, width=canvas_width)
 
     def setupUI(self) : 
         #--------------------------------- Setup ui principale

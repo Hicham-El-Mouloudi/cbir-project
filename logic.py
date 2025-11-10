@@ -87,11 +87,11 @@ class Toolbox :
     
     def generateSearchResultsPlot(self, searchResults, imagesSize) :
         numResults = len(searchResults)
-        nombreColonnes = 3
+        nombreColonnes = 5
         nombreLignes = math.ceil(numResults / nombreColonnes)
         
-        width = nombreColonnes * 3
-        height = nombreLignes * 3
+        width = nombreColonnes * 2
+        height = nombreLignes * 2
         fig = Figure(figsize=(width, height), dpi=100)
         
         print("Search results : ", list(enumerate(searchResults)))
@@ -101,7 +101,8 @@ class Toolbox :
             
             ax = fig.add_subplot(nombreLignes, nombreColonnes, i + 1)
             ax.imshow(image)
-            ax.set_title(f"D = {distance:.4f}, '" + imagePath + "'")
+            # ax.set_title(f"D = {distance:.4f}, '{os.path.basename(imagePath)}'")
+            ax.set_title(f"D={distance:.4f}")
             ax.axis('off')
         
         return fig
@@ -210,6 +211,7 @@ class ImageSearcher :
         allResults = sorted( distances.items(), key= lambda item : item[1])
         print("Les réesultats par Distance Euclidienne : ", allResults)
         topKResults = allResults[:topK]
+        print("Top K Results : ", topKResults)
         return topKResults
 
     def rechercherDBAvecDistanceChiCarre(self, indexDB, histobineQueryImage,imagesSize, topK=5) :
