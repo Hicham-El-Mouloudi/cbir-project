@@ -93,7 +93,7 @@ class SectionRechercheUI :
         self.histogramsPlaceholderLabel.pack(padx=5, pady=5)
         # labeled frame pour les resultats de la recherche
         self.resultatsRechercheFrame = tk.LabelFrame(self.sectionContainer, text="Résultats de la recherche")
-        self.resultatsPlaceholderLabel = tk.Label(self.resultatsRechercheFrame, text="(Résultats de la recherche apparaîtront ici)")
+        self.resultatsPlaceholderLabel = tk.Label(self.resultatsRechercheFrame, text="Résultats de la recherche apparaîtront ici")
         self.resultatsPlaceholderLabel.pack(padx=5, pady=5)
         # 
         self.selectedImagePath = None
@@ -223,7 +223,7 @@ class MainUI :
     def __init__(self, imageSearcher, indexDBCreator, toolbox) :
         self.rootTK = tk.Tk()
         self.rootTK.title("Système CBIR")
-        self.rootTK.geometry("500x700")
+        self.rootTK.geometry("700x700")
         #
         self.scrollableArea = tk.Canvas(self.rootTK)
         self.scrollableArea.pack(side="left", fill="both", expand=True)
