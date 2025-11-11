@@ -199,7 +199,7 @@ class SectionRechercheUI :
                 resultas = self.imageSearcher.rechercherDBAvecCorrelation(indexDB, histobineQueryImage, imagesSize=imagesSize, topK=nombreDeResultatsDemande)
             else:
                 raise Exception(f"L'algorithme de similarité '{typeDeDistance}' n'est pas encore implémenté.")
-            lesPlotsDesResultas = self.toolbox.generateSearchResultsPlot(resultas, imagesSize)
+            lesPlotsDesResultas = self.toolbox.generateSearchResultsPlot(resultas, imagesSize, self.selectedImagePath)
             self.afficherResultatsRecherche(lesPlotsDesResultas)
         except Exception as e:
             messagebox.showerror("Erreur", f"Erreur lors de la préparation de la recherche :\n{e}")

@@ -47,6 +47,7 @@ class Toolbox :
     
     def generateHistogrammesPlot(self, histogrammeComplet, histobine, colorSpace) :
         fig = Figure(figsize=(3, 4), dpi=100)
+        # 
         ax1 = fig.add_subplot(1, 2, 1)
         ax1.set_title("Histogramme Complet")
         pixelChanelSizeHistogramComplet = len(histogrammeComplet) // 3 # C'est 256 normalement
@@ -85,8 +86,8 @@ class Toolbox :
         
         return fig
     
-    def generateSearchResultsPlot(self, searchResults, imagesSize) :
-        numResults = len(searchResults)
+    def generateSearchResultsPlot(self, searchResults, imagesSize, queryImagePath) :
+        numResults = len(searchResults) + 1
         nombreColonnes = 5
         nombreLignes = math.ceil(numResults / nombreColonnes)
         
@@ -95,6 +96,9 @@ class Toolbox :
         fig = Figure(figsize=(width, height), dpi=100)
         
         print("Search results : ", list(enumerate(searchResults)))
+        # afficher l'image de requete
+        searchResults.insert(0, (queryImagePath, 0.0))  # Distance = 0 pour l'image originale
+        # 
         for i, (imagePath, distance) in list(enumerate(searchResults)):
             image = self.readImage(imagePath, "RGB")
             image = self.redimensionnerImage(image, imagesSize)
