@@ -39,8 +39,8 @@ class Toolbox :
         return histogramme
     
     def calculerHistobine(self, histogrammeComplet, binsNombreParCanal) :
-        tailleHistobine = int(256 / binsNombreParCanal) * 3
-        reshapedBins = histogrammeComplet.reshape((tailleHistobine, binsNombreParCanal))
+        tailleBine = int(256 / binsNombreParCanal)
+        reshapedBins = histogrammeComplet.reshape((binsNombreParCanal*3, tailleBine))
         print("The reshaped new bins are : ", reshapedBins)
         histobine = reshapedBins.sum(axis=1)
         return histobine
@@ -121,7 +121,7 @@ class IndexDBCreator :
         self.binsNombreParCanal = binsNombreParCanal
 
     def saveIndexDBAsJson(self, jsonBody, colorSpace, imagesSize, binsNombreParCanal) : 
-        with open('indexDB.json', 'w') as jsonFile:
+        with open('descripteurs.json', 'w') as jsonFile:
             jsonBodyWithMetaData = {
                 "colorSpace": colorSpace,
                 "imagesSize": imagesSize,
