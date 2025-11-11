@@ -97,7 +97,7 @@ class Toolbox :
         
         print("Search results : ", list(enumerate(searchResults)))
         # afficher l'image de requete
-        searchResults.insert(0, (queryImagePath, 0.0))  # Distance = 0 pour l'image originale
+        searchResults.insert(0, (queryImagePath, 0.0))  # on l'ajoute au debut de la liste
         # 
         for i, (imagePath, distance) in list(enumerate(searchResults)):
             image = self.readImage(imagePath, "RGB")
@@ -105,9 +105,11 @@ class Toolbox :
             
             ax = fig.add_subplot(nombreLignes, nombreColonnes, i + 1)
             ax.imshow(image)
-            # ax.set_title(f"D = {distance:.4f}, '{os.path.basename(imagePath)}'")
-            ax.set_title(f"D={distance:.4f}")
             ax.axis('off')
+            if i == 0 :
+                ax.set_title("Image Origine")
+            else :
+                ax.set_title(f"D={distance:.4f}")
         
         return fig
 
