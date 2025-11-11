@@ -5,6 +5,7 @@ import os
 from matplotlib.figure import Figure
 import math
 
+# Classe Toolbox pour les opérations de base sur les images 
 class Toolbox :
     def readImage(self, imagePath, colorSpace) :
         image = cv2.imread(imagePath)
@@ -41,10 +42,10 @@ class Toolbox :
     def calculerHistobine(self, histogrammeComplet, binsNombreParCanal) :
         tailleBine = int(256 / binsNombreParCanal)
         reshapedBins = histogrammeComplet.reshape((binsNombreParCanal*3, tailleBine))
-        print("The reshaped new bins are : ", reshapedBins)
         histobine = reshapedBins.sum(axis=1)
         return histobine
     
+    # generer les plots pour l'affichage des histogrammes
     def generateHistogrammesPlot(self, histogrammeComplet, histobine, colorSpace) :
         fig = Figure(figsize=(3, 4), dpi=100)
         # 
@@ -64,7 +65,6 @@ class Toolbox :
             ax1.bar(range(0, pixelChanelSizeHistogramComplet), histogrammeComplet[0:256], color='r', label='Canal Rouge')
             ax1.bar(range(0, pixelChanelSizeHistogramComplet), histogrammeComplet[256:512], color='g', label='Canal Vert')
             ax1.bar(range(0, pixelChanelSizeHistogramComplet), histogrammeComplet[512:768], color='b', label='Canal Bleu')   
-        print("The pixel channel size of the complet histogram is : ", pixelChanelSizeHistogramComplet)
         ax2 = fig.add_subplot(1, 2, 2)
         ax2.set_title("Histobine")
         if colorSpace == "HSV" :
@@ -79,7 +79,6 @@ class Toolbox :
             ax2.bar(range(0, pixelChanelSizeHistobine), histobine[0:pixelChanelSizeHistobine], color='r', label='Canal Rouge')
             ax2.bar(range(0, pixelChanelSizeHistobine), histobine[pixelChanelSizeHistobine:2*pixelChanelSizeHistobine], color='g', label='Canal Vert')
             ax2.bar(range(0, pixelChanelSizeHistobine), histobine[2*pixelChanelSizeHistobine:3*pixelChanelSizeHistobine], color='b', label='Canal Bleu')
-        print("The pixel channel size of the histobine is : ", pixelChanelSizeHistobine)
         # ajouter les legendes
         ax1.legend()
         ax2.legend()
@@ -87,15 +86,14 @@ class Toolbox :
         return fig
     
     def generateSearchResultsPlot(self, searchResults, imagesSize, queryImagePath) :
-        numResults = len(searchResults) + 1
-        nombreColonnes = 5
-        nombreLignes = math.ceil(numResults / nombreColonnes)
+        numResults = len(searchResults) + 1 # +1 pour l'image origine
+        nombreColonnes = 5 # nombre de plots par ligne
+        nombreLignes = math.ceil(numResults / nombreColonnes) # nombre de lignes necessaires
         
         width = nombreColonnes * 2
         height = nombreLignes * 2
         fig = Figure(figsize=(width, height), dpi=100)
         
-        print("Search results : ", list(enumerate(searchResults)))
         # afficher l'image de requete
         searchResults.insert(0, (queryImagePath, 0.0))  # on l'ajoute au debut de la liste
         # 
@@ -103,7 +101,7 @@ class Toolbox :
             image = self.readImage(imagePath, "RGB")
             image = self.redimensionnerImage(image, imagesSize)
             
-            ax = fig.add_subplot(nombreLignes, nombreColonnes, i + 1)
+            ax = fig.add_subplot(nombreLignes, nombreColonnes, i + 1) # +1 car les index de subplot commencent à 1
             ax.imshow(image)
             ax.axis('off')
             if i == 0 :
@@ -113,6 +111,7 @@ class Toolbox :
         
         return fig
 
+# Classe pour la creation de la base des descripteurs et les stockers dans un fichier json
 class IndexDBCreator : 
     def __init__(self, datasetPath, toolbox, imagesSize=(256, 256), binsNombreParCanal = 8) :
         self.datasetPath = datasetPath
@@ -120,6 +119,7 @@ class IndexDBCreator :
         self.imagesSize = imagesSize
         self.toolbox = toolbox
         
+    # donne la taille globale des images pour le redimensionnement
     def getImagesSize(self) : 
         return self.imagesSize
 
@@ -128,14 +128,16 @@ class IndexDBCreator :
 
     def saveIndexDBAsJson(self, jsonBody, colorSpace, imagesSize, binsNombreParCanal) : 
         with open('descripteurs.json', 'w') as jsonFile:
+            # Ajout des métadonnées pour la validation de la compatibilité entre les descripteurs et les paramètres configurés utilisés
             jsonBodyWithMetaData = {
                 "colorSpace": colorSpace,
                 "imagesSize": imagesSize,
                 "binsNombreParCanal": binsNombreParCanal,
-                "data": jsonBody
+                "data": jsonBody # La base des descripteurs
             }
             json.dump(jsonBodyWithMetaData, jsonFile)
     
+    # Methode principale pour créer la base des descripteurs et la sauvegarder dans un fichier json
     def createIndexDB(self, colorSpace) :
         indexDB = {}
         for root, _, files in os.walk(self.datasetPath):
@@ -152,6 +154,7 @@ class IndexDBCreator :
 
         self.saveIndexDBAsJson(indexDB, colorSpace, self.imagesSize, self.binsNombreParCanal)
 
+# Classe pour la recherche d'images similaires dans la base des descripteurs
 class ImageSearcher :
     def __init__(self, indexDBPath, toolbox) :
         self.indexDBPath = indexDBPath
@@ -170,6 +173,7 @@ class ImageSearcher :
                 valide = True
             return indexDBWithMetaData["data"], valide
     
+    # preparer la recherche en calculant l'histobine de l'image de requete et en chargeant la base des descripteurs
     def preparerRechercheImagesSimilaires(self, queryImage, colorSpace, imagesSize, binsNombreParCanal, topK=5) :
         # 
         indexDB, valide = self.loadIndexDBFromJsonAndCheck(colorSpace, imagesSize, binsNombreParCanal)
@@ -182,48 +186,48 @@ class ImageSearcher :
         
         return indexDB, histobineQueryImage
 
+    # la methode pour rechercher la base des descripteur par la methode de Swain & Ballard
     def rechercherDBAvecDistanceSwainBallard(self, indexDB, histobineQueryImage,imagesSize, topK=5) :
         # calculer les distances
         distances = {}
-        for imagePath, histobine in list(indexDB.items()) : 
+        for imagePath, histobine in list(indexDB.items()) : # parcourir chaque image dans la base des descripteurs
             similarite = 0
             for i in range(len(histobineQueryImage)) : 
                 similarite += min(histobine[i], histobineQueryImage[i])
-            # normalizing the similarity to [0,1]
+            # la normalisation entre 0 et 1
             similarite = similarite / (imagesSize[0] * imagesSize[1]*3)
-            # storing the distance
+            # stockage de la distance
             distances[imagePath] = float(similarite)
         
         # trier les distances et obtenir les top K resultats
         allResults = sorted( distances.items(), key= lambda item : item[1], reverse=True )
-        print("Les réesultats par Swain&Ballard : ", allResults)
         topKResults = allResults[:topK]
         return topKResults
 
+    # la methode pour rechercher la base des descripteur par la methode de Distance Euclidienne
     def rechercherDBAvecDistanceEuclidienne(self, indexDB, histobineQueryImage,imagesSize, topK=5) :
         # calculer les distances
         distances = {}
-        for imagePath, histobine in list(indexDB.items()) : 
+        for imagePath, histobine in list(indexDB.items()) : # parcourir chaque image dans la base des descripteurs
             similarite = 0
             for i in range(len(histobineQueryImage)) : 
                 similarite += ( histobine[i] - histobineQueryImage[i] ) ** 2
             # calculer la racine carrée pour obtenir la distance euclidienne
             similarite = math.sqrt(similarite)
-            # storing the distance
+            # stockage de la distance
             distances[imagePath] = float(similarite)
         
         # trier les distances et obtenir les top K resultats
         # une valeur de distance plus petite indique une plus grande similarité
         allResults = sorted( distances.items(), key= lambda item : item[1])
-        print("Les réesultats par Distance Euclidienne : ", allResults)
         topKResults = allResults[:topK]
-        print("Top K Results : ", topKResults)
         return topKResults
 
+    # la methode pour rechercher la base des descripteur par la methode de Distance Chi-Carré
     def rechercherDBAvecDistanceChiCarre(self, indexDB, histobineQueryImage,imagesSize, topK=5) :
         # calculer les distances
         distances = {}
-        for imagePath, histobine in list(indexDB.items()) : 
+        for imagePath, histobine in list(indexDB.items()) : # parcourir chaque image dans la base des descripteurs
             similarite = 0
             for i in range(len(histobineQueryImage)) : 
                 denominateur = (histobine[i] + histobineQueryImage[i])
@@ -235,10 +239,10 @@ class ImageSearcher :
         # trier les distances et obtenir les top K resultats
         # une valeur de distance plus petite indique une plus grande similarité
         allResults = sorted( distances.items(), key= lambda item : item[1])
-        print("\n\n\n\nLes réesultats par Distance Chi-Carré : ", allResults, "\n\n\n\n")
         topKResults = allResults[:topK]
         return topKResults
 
+    # la methode pour rechercher la base des descripteur par la methode de Correlation
     def rechercherDBAvecCorrelation(self, indexDB, histobineQueryImage,imagesSize, topK=5) :
         # calculer les distances
         distances = {}
@@ -246,7 +250,7 @@ class ImageSearcher :
         numerateur = 0
         denominateurHistobineQueryImageSum = 0
         denominateurHistobineSum = 0
-        for imagePath, histobine in list(indexDB.items()) : 
+        for imagePath, histobine in list(indexDB.items()) : # parcourir chaque image dans la base des descripteurs
             similarite = 0
             AverageHistobine = np.mean(histobine)
             for i in range(len(histobineQueryImage)) : 
@@ -255,12 +259,11 @@ class ImageSearcher :
                 denominateurHistobineSum += (histobine[i] - AverageHistobine) ** 2
             denominateur = math.sqrt(denominateurHistobineQueryImageSum * denominateurHistobineSum)
             similarite = numerateur / denominateur
-            # storing the distance
+            # stockage de la distance
             distances[imagePath] = float(similarite)
         
         # trier les distances et obtenir les top K resultats
         # une valeur de distance plus proche de 1 indique une plus grande similarité
         allResults = sorted( distances.items(), key= lambda item : item[1], reverse=True)
-        print("Les réesultats par Correlation : ", allResults)
         topKResults = allResults[:topK]
         return topKResults

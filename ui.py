@@ -4,6 +4,7 @@ from tkinter import filedialog
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import cv2
 
+# Section UI pour le sous-systeme d'indexation
 class SectionIndexationUI : 
     def __init__(self, sectionContainer, indexDBCreator) : 
         # reference a l'instance de la classe IndexDBCreator
@@ -52,18 +53,17 @@ class SectionIndexationUI :
         # disabling the button to prevent multiple clicks
         self.createIndexingDBButton.config(state=tk.DISABLED)
 
-        print("Creating indexing DB...\n")
         binsNombreParCanal = self.getSelectedBinsNumber()
         colorSpace = self.getSelectedColorSpace()
         self.indexDBCreator.setBinsNombreParCanal(binsNombreParCanal)
         self.indexDBCreator.createIndexDB(colorSpace)
-        print("Creating indexing DB Completed successfully !\n")
 
         # re-enabling the button
         self.createIndexingDBButton.config(state=tk.NORMAL)
         # Afficher une popup avec un message de confirmation
         messagebox.showinfo("Succès", "La base d'indexation a été créée avec succès.")
 
+# Section UI pour le sous-systeme de recherche d’Images par le Contenu
 class SectionRechercheUI : 
     def __init__(self, imageSearcher, sectionContainer, indexDBCreator , sectionIndexationUI , toolbox) :
         self.imageSearcher = imageSearcher
@@ -135,7 +135,6 @@ class SectionRechercheUI :
         selectedColorSpace = self.sectionIndexationUI.getSelectedColorSpace()
         selectedBinsNumber = self.sectionIndexationUI.getSelectedBinsNumber()
         # 
-        print("Choisir une image action triggered.")
         try:
             filepath = filedialog.askopenfilename(
                 title="Choisir une image",
@@ -145,7 +144,6 @@ class SectionRechercheUI :
                 return
             self.selectedImagePath = filepath
             self.selectedImage = self.toolbox.readImage(filepath, selectedColorSpace)
-            print("Image sélectionnée :", filepath)
             
             # Generer et afficher les histogrammes de l'image choisie
             if self.selectedImage is not None:
@@ -153,7 +151,6 @@ class SectionRechercheUI :
                 histogrammeComplet = self.toolbox.calculerHistogrammeComplet(resizedImage, self.indexDBCreator.getImagesSize())
                 histobine = self.toolbox.calculerHistobine(histogrammeComplet, selectedBinsNumber)
                 fig = self.toolbox.generateHistogrammesPlot(histogrammeComplet, histobine, selectedColorSpace)
-                print("Breakpoint : Etape pass avec succès.")
 
                 # vider le frame avant d'ajouter le nouveau plot
                 for widget in self.lesHistogrammesFrame.winfo_children():
@@ -167,7 +164,6 @@ class SectionRechercheUI :
     
 
     def rechercherAction(self) :
-        print("Rechercher action triggered.")
         # disabling the button to prevent multiple clicks
         self.rechercherButton.config(state=tk.DISABLED)
 
@@ -219,13 +215,14 @@ class SectionRechercheUI :
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
+# Interface utilisateur principale
 class MainUI : 
     def __init__(self, imageSearcher, indexDBCreator, toolbox) :
         self.rootTK = tk.Tk()
         self.rootTK.title("Système CBIR")
         self.rootTK.geometry("700x700")
         #
-        self.scrollableArea = tk.Canvas(self.rootTK)
+        self.scrollableArea = tk.Canvas(self.rootTK) # créer une zone défilante
         self.scrollableArea.pack(side="left", fill="both", expand=True)
         scrollbar = tk.Scrollbar(self.rootTK, orient="vertical", command=self.scrollableArea.yview)
         scrollbar.pack(side="right", fill="y")
@@ -241,6 +238,7 @@ class MainUI :
         # Les sous-sections UI
         self.sectionIndexationUI = SectionIndexationUI(self.sectionIndexation, indexDBCreator)
         self.sectionRechercheUI = SectionRechercheUI(imageSearcher, self.sectionRecherche, indexDBCreator, self.sectionIndexationUI, toolbox)
+    # redimensionner le canvas lors du redimensionnement de la fenetre principale
     def on_canvas_resize(self, event):
         canvas_width = event.width
         self.scrollableArea.itemconfig(self.frame_id, width=canvas_width)
